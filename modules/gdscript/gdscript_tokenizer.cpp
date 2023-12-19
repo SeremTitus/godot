@@ -105,6 +105,7 @@ static const char *token_names[] = {
 	"assert", // ASSERT,
 	"await", // AWAIT,
 	"breakpoint", // BREAKPOINT,
+	"by", // BY,
 	"class", // CLASS,
 	"class_name", // CLASS_NAME,
 	"const", // CONST,
@@ -120,6 +121,8 @@ static const char *token_names[] = {
 	"static", // STATIC,
 	"super", // SUPER,
 	"trait", // TRAIT,
+	"trait_name", // TRAIT_NAME,
+	"uses", // USES,
 	"var", // VAR,
 	"void", // VOID,
 	"yield", // YIELD,
@@ -210,6 +213,7 @@ bool GDScriptTokenizer::Token::is_node_name() const {
 		case AWAIT:
 		case BREAK:
 		case BREAKPOINT:
+		case BY:
 		case CLASS_NAME:
 		case CLASS:
 		case CONST:
@@ -239,6 +243,8 @@ bool GDScriptTokenizer::Token::is_node_name() const {
 		case STATIC:
 		case SUPER:
 		case TRAIT:
+		case TRAIT_NAME:
+		case USES:
 		case UNDERSCORE:
 		case VAR:
 		case VOID:
@@ -493,6 +499,7 @@ GDScriptTokenizer::Token GDScriptTokenizer::annotation() {
 	KEYWORD_GROUP('b')                       \
 	KEYWORD("break", Token::BREAK)           \
 	KEYWORD("breakpoint", Token::BREAKPOINT) \
+	KEYWORD("by", Token::BY)                 \
 	KEYWORD_GROUP('c')                       \
 	KEYWORD("class", Token::CLASS)           \
 	KEYWORD("class_name", Token::CLASS_NAME) \
@@ -529,6 +536,9 @@ GDScriptTokenizer::Token GDScriptTokenizer::annotation() {
 	KEYWORD("super", Token::SUPER)           \
 	KEYWORD_GROUP('t')                       \
 	KEYWORD("trait", Token::TRAIT)           \
+	KEYWORD("trait_name", Token::TRAIT_NAME) \
+	KEYWORD_GROUP('u')                       \
+	KEYWORD("uses", Token::USES)             \
 	KEYWORD_GROUP('v')                       \
 	KEYWORD("var", Token::VAR)               \
 	KEYWORD("void", Token::VOID)             \

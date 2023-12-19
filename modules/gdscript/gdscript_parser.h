@@ -1317,6 +1317,7 @@ public:
 private:
 	friend class GDScriptAnalyzer;
 
+	bool _is_trait = false;
 	bool _is_tool = false;
 	String script_path;
 	bool for_completion = false;
@@ -1541,6 +1542,7 @@ private:
 public:
 	Error parse(const String &p_source_code, const String &p_script_path, bool p_for_completion);
 	ClassNode *get_tree() const { return head; }
+	bool is_trait() const { return _is_trait; }
 	bool is_tool() const { return _is_tool; }
 	ClassNode *find_class(const String &p_qualified_name) const;
 	bool has_class(const GDScriptParser::ClassNode *p_class) const;

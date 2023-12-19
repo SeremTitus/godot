@@ -331,6 +331,10 @@ Error GDScriptParser::parse(const String &p_source_code, const String &p_script_
 	tokenizer.set_source_code(source);
 	tokenizer.set_cursor_position(cursor_line, cursor_column);
 	script_path = p_script_path;
+	String el = script_path.get_extension().to_lower();
+	if (el == "gdt") {
+		_is_trait = true;
+	}
 	current = tokenizer.scan();
 	// Avoid error or newline as the first token.
 	// The latter can mess with the parser when opening files filled exclusively with comments and newlines.
@@ -548,10 +552,19 @@ void GDScriptParser::parse_program() {
 		switch (current.type) {
 			case GDScriptTokenizer::Token::CLASS_NAME:
 				advance();
+				if (_is_trait) {
+					push_error(R"("class_name" can only be used class files (.gd).)");
+				}
 				if (head->identifier != nullptr) {
 					push_error(R"("class_name" can only be used once.)");
 				} else {
 					parse_class_name();
+				}
+				break;
+			case GDScriptTokenizer::Token::TRAIT_NAME:
+				advance();
+				if (!_is_trait) {
+					push_error(R"("trait_name" can only be used trait files (.gdt).)");
 				}
 				break;
 			case GDScriptTokenizer::Token::EXTENDS:
@@ -562,6 +575,12 @@ void GDScriptParser::parse_program() {
 					parse_extends();
 					end_statement("superclass");
 				}
+				break;
+			case GDScriptTokenizer::Token::USES:
+				advance();
+				break;
+			case GDScriptTokenizer::Token::BY:
+				advance();
 				break;
 			case GDScriptTokenizer::Token::LITERAL:
 				if (current.literal.get_type() == Variant::STRING) {
@@ -846,7 +865,16 @@ void GDScriptParser::parse_class_body(bool p_is_multiline) {
 				parse_class_member(&GDScriptParser::parse_function, AnnotationInfo::FUNCTION, "function", next_is_static);
 				break;
 			case GDScriptTokenizer::Token::CLASS:
+				if (_is_trait) {
+					push_error(R"("class" can only be used class files (.gd).)");
+				}
 				parse_class_member(&GDScriptParser::parse_class, AnnotationInfo::CLASS, "class");
+				break;
+			case GDScriptTokenizer::Token::TRAIT:
+				advance();
+				if (!_is_trait) {
+					push_error(R"("trait" can only be used trait files (.gdt).)");
+				}
 				break;
 			case GDScriptTokenizer::Token::ENUM:
 				parse_class_member(&GDScriptParser::parse_enum, AnnotationInfo::NONE, "enum");
@@ -3724,6 +3752,7 @@ GDScriptParser::ParseRule *GDScriptParser::get_rule(GDScriptTokenizer::Token::Ty
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // ASSERT,
 		{ &GDScriptParser::parse_await,                  	nullptr,                                        PREC_NONE }, // AWAIT,
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // BREAKPOINT,
+		{ nullptr,                                          nullptr,                                        PREC_NONE }, // BY,
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // CLASS,
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // CLASS_NAME,
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // CONST,
@@ -3739,6 +3768,8 @@ GDScriptParser::ParseRule *GDScriptParser::get_rule(GDScriptTokenizer::Token::Ty
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // STATIC,
 		{ &GDScriptParser::parse_call,						nullptr,                                        PREC_NONE }, // SUPER,
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // TRAIT,
+		{ nullptr,                                          nullptr,                                        PREC_NONE }, // TRAIT_NAME,
+		{ nullptr,                                          nullptr,                                        PREC_NONE }, // USES,
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // VAR,
 		{ nullptr,                                          nullptr,                                        PREC_NONE }, // VOID,
 		{ &GDScriptParser::parse_yield,                     nullptr,                                        PREC_NONE }, // YIELD,
@@ -3855,6 +3886,10 @@ bool GDScriptParser::validate_annotation_arguments(AnnotationNode *p_annotation)
 
 bool GDScriptParser::tool_annotation(const AnnotationNode *p_annotation, Node *p_target, ClassNode *p_class) {
 #ifdef DEBUG_ENABLED
+	if (this->_is_trait) {
+		push_error(R"("@tool" annotation can only be used in Class files (.gd).)", p_annotation);
+		return false;
+	}
 	if (this->_is_tool) {
 		push_error(R"("@tool" annotation can only be used once.)", p_annotation);
 		return false;

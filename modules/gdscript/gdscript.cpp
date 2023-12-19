@@ -2578,6 +2578,7 @@ void GDScriptLanguage::get_reserved_words(List<String> *p_words) const {
 		"when",
 		"while",
 		// Declarations.
+		"by",
 		"class",
 		"class_name",
 		"const",
@@ -2587,7 +2588,9 @@ void GDScriptLanguage::get_reserved_words(List<String> *p_words) const {
 		"namespace", // Reserved for potential future use.
 		"signal",
 		"static",
-		"trait", // Reserved for potential future use.
+		"trait",
+		"trait_name",
+		"uses",
 		"var",
 		// Other keywords.
 		"await",
@@ -2866,7 +2869,7 @@ bool ResourceFormatLoaderGDScript::handles_type(const String &p_type) const {
 
 String ResourceFormatLoaderGDScript::get_resource_type(const String &p_path) const {
 	String el = p_path.get_extension().to_lower();
-	if (el == "gd") || (el == "gdt") {
+	if ((el == "gd") || (el == "gdt")) {
 		return "GDScript";
 	}
 	return "";
