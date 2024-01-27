@@ -806,17 +806,17 @@ void GDScriptParser::parse_extends() {
 }
 
 void GDScriptParser::parse_uses() {
-	Vector<ClassNode::use> uses;
+	Vector<ClassNode::Uses> uses;
 
 	while (true) {
-		ClassNode::use use;
+		ClassNode::Uses use;
 		int chain_index = 0;
 
 		if (match(GDScriptTokenizer::Token::LITERAL)) {
 			if (previous.literal.get_type() != Variant::STRING) {
 				push_error(vformat(R"(Only strings or identifiers can be used after "uses", found "%s" instead.)", Variant::get_type_name(previous.literal.get_type())));
 			}
-			use.uses_path = previous.literal;
+			use.use_path = previous.literal;
 
 			if (!match(GDScriptTokenizer::Token::PERIOD)) {
 				break;
@@ -828,14 +828,14 @@ void GDScriptParser::parse_uses() {
 		if (!consume(GDScriptTokenizer::Token::IDENTIFIER, R"(Expected superclass name after "uses".)")) {
 			break;
 		}
-		use.uses_names.push_back(parse_identifier());
+		use.use_name.push_back(parse_identifier());
 
 		while (match(GDScriptTokenizer::Token::PERIOD)) {
 			make_completion_context(COMPLETION_USES_TYPE, current_class, chain_index++);
 			if (!consume(GDScriptTokenizer::Token::IDENTIFIER, R"(Expected superclass name after ".".)")) {
 				break;
 			}
-			use.uses_names.push_back(parse_identifier());
+			use.use_name.push_back(parse_identifier());
 		}
 		uses.push_back(use);
 		if (!match(GDScriptTokenizer::Token::COMMA)) {
@@ -843,9 +843,9 @@ void GDScriptParser::parse_uses() {
 		}
 	}
 
-	if (match(GDScriptTokenizer::Token::BY)) {
+	while (match(GDScriptTokenizer::Token::BY)) {
 		String by_path;
-		Vector<IdentifierNode *> by_names;
+		Vector<IdentifierNode *> by_name;
 		int chain_index = 0;
 		
 		bool search_continue = true;
@@ -868,7 +868,7 @@ void GDScriptParser::parse_uses() {
 			search_continue = false;
 		}
 		if (search_continue) {
-			by_names.push_back(parse_identifier());
+			by_name.push_back(parse_identifier());
 		}
 
 		while (search_continue && match(GDScriptTokenizer::Token::PERIOD)) {
@@ -876,12 +876,15 @@ void GDScriptParser::parse_uses() {
 			if (!consume(GDScriptTokenizer::Token::IDENTIFIER, R"(Expected superclass name after ".".)")) {
 				break;
 			}
-			by_names.push_back(parse_identifier());
+			by_name.push_back(parse_identifier());
 		}
 
-		for (ClassNode::use &use : uses) {
-			use.by_path = by_path;
-			use.by_names.append_array(by_names);
+		for (ClassNode::Uses &use : uses) {
+			use.by_used = true;
+			use.by.append(ClassNode::Uses::By(by_path, by_name));
+		}
+		if (!match(GDScriptTokenizer::Token::COMMA)) {
+			break;
 		}
 	}
 
@@ -4524,12 +4527,8 @@ String GDScriptParser::DataType::to_string() const {
 				return GDScriptNativeClass::get_class_static();
 			}
 			return native_type.operator String();
-		case CLASS:
-			if (class_type->identifier != nullptr) {
-				return class_type->identifier->name.operator String();
-			}
-			return class_type->fqcn;
 		case TRAIT:
+		case CLASS:
 			if (class_type->identifier != nullptr) {
 				return class_type->identifier->name.operator String();
 			}
@@ -4995,10 +4994,8 @@ void GDScriptParser::TreePrinter::print_class(ClassNode *p_class) {
 		const ClassNode::Member &m = p_class->members[i];
 
 		switch (m.type) {
-			case ClassNode::Member::CLASS:
-				print_class(m.m_class);
-				break;
 			case ClassNode::Member::TRAIT:
+			case ClassNode::Member::CLASS:
 				print_class(m.m_class);
 				break;
 			case ClassNode::Member::VARIABLE:

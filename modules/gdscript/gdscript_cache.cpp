@@ -86,6 +86,13 @@ Error GDScriptParserRef::raise_status(Status p_new_status) {
 				}
 			} break;
 			case INTERFACE_SOLVED: {
+				status = USES_SOLVED;
+				Error body_result = get_analyzer()->resolve_uses();
+				if (result == OK) {
+					result = body_result;
+				}
+			} break;
+			case USES_SOLVED: {
 				status = FULLY_SOLVED;
 				Error body_result = get_analyzer()->resolve_body();
 				if (result == OK) {

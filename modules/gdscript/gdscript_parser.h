@@ -751,11 +751,21 @@ public:
 			}
 		};
 
-		struct use{
-			String uses_path;
-			Vector<IdentifierNode *> uses_names; // List for indexing Trait: uses A.B.C
-			String by_path;
-			Vector<IdentifierNode *> by_names; // List for indexing Class: uses A.B.C
+		struct Uses{
+			struct By {
+				String by_path;
+				Vector<IdentifierNode *> by_name; // List for indexing Class: uses A.B.C
+				
+				By () {}
+				By(String p_by_path, Vector<IdentifierNode *> p_by_name) {
+					by_path = p_by_path;
+					by_name = p_by_name;
+				}
+			};
+			String use_path;
+			Vector<IdentifierNode *> use_name; // List for indexing Trait: uses A.B.C
+			bool by_used = false;
+			Vector<By> by;
 		};
 
 		IdentifierNode *identifier = nullptr;
@@ -770,7 +780,7 @@ public:
 		bool annotated_static_unload = false;
 		String extends_path;
 		Vector<IdentifierNode *> extends; // List for indexing: extends A.B.C
-		Vector<use> uses;
+		Vector<Uses> uses;
 		DataType base_type;
 		String fqcn; // Fully-qualified class name. Identifies uniquely any class in the project.
 #ifdef TOOLS_ENABLED
