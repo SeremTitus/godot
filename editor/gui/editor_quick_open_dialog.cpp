@@ -394,8 +394,22 @@ void QuickOpenResultContainer::_find_filepaths_in_folder(EditorFileSystemDirecto
 		const bool is_engine_type = script_type == StringName();
 		const StringName &actual_type = is_engine_type ? engine_type : script_type;
 
+		Ref<Resource> res;
+		if (!is_engine_type && ClassDB::is_parent_class(SNAME("Resource"), engine_type)) {
+			res = ResourceLoader::load(p_directory->get_file_path(i), "Resource");
+			if (ClassDB::is_parent_class(SNAME("Script"), engine_type) && ScriptServer::is_scripting_enabled()) {
+				if (res.is_valid() && !static_cast<Ref<Script>>(res)->is_attachable()) {
+					continue; // Exclude scripts that can not be attacheched to nodes.
+				}
+			}
+		}
+
 		for (const StringName &parent_type : base_types) {
 			bool is_valid = ClassDB::is_parent_class(engine_type, parent_type) || (!is_engine_type && EditorNode::get_editor_data().script_class_is_parent(script_type, parent_type));
+
+			if (!is_valid && res.is_valid() && res->get_script()) {
+				is_valid = static_cast<Ref<Script>>(res->get_script())->has_script_type(parent_type);
+			}
 
 			if (is_valid) {
 				filepaths.append(file_path);
