@@ -3612,6 +3612,8 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 
 	bool is_constructor = (base_type.is_meta_type || (p_call->callee && p_call->callee->type == GDScriptParser::Node::IDENTIFIER)) && p_call->function_name == SNAME("new");
 
+	p_call->is_constructor = is_constructor;
+
 	if (is_constructor) {
 		if (Engine::get_singleton()->has_singleton(base_type.native_type)) {
 			push_error(vformat(R"(Cannot construct native class "%s" because it is an engine singleton.)", base_type.native_type), p_call);

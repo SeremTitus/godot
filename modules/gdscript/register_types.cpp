@@ -65,6 +65,7 @@
 #ifdef TESTS_ENABLED
 #include "tests/test_macros.h"
 #endif
+#include "gdscript_cpp_gen.h"
 
 GDScriptLanguage *script_language_gd = nullptr;
 Ref<ResourceFormatLoaderGDScript> resource_loader_gd;
@@ -139,6 +140,7 @@ static void _editor_init() {
 void initialize_gdscript_module(ModuleInitializationLevel p_level) {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SERVERS) {
 		GDREGISTER_CLASS(GDScript);
+		GDREGISTER_CLASS(GDScriptCPPGen);
 
 		script_language_gd = memnew(GDScriptLanguage);
 		ScriptServer::register_language(script_language_gd);
